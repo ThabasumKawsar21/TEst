@@ -1,0 +1,26 @@
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Web;
+
+namespace VMSWebApi.Classes
+    {
+    public class SearchVisitor
+        {
+        public string VisitorFullName { get; set; }        
+        public string Company { get; set; }
+        public string MobileNo { get; set; }
+        public string VisitorType { get; set; }
+        
+        public List<EquipmentList> EqDetails { get; set; }
+        public class EquipmentList
+        {
+           
+            public string Make { get; set; }
+            public string Model { get; set; }
+            public string SerialNo { get; set; }            
+            public string MasterDataDescription { get; set; }
+        }
+    }
+    }
