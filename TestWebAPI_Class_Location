@@ -1,0 +1,14 @@
+namespace VMSWebApi.Classes
+    {
+    public class LocationDetails
+        {
+        public string Country { get; set; }
+        public string City { get; set; }
+        public string Facility { get; set; }
+        public string FromDate { get; set; }
+        public string ToDate { get; set; }
+        public string FromTime { get; set; }
+        public string ToTime { get; set; }
+        public string HostID { get; set; }
+    }
+    }
