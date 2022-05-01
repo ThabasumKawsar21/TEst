@@ -1,0 +1,452 @@
+//-----------------------------------------------------------------------
+// <copyright file="HomePageController.cs" company="CTS">
+//     Copyright (c) . All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
+namespace VMSWebApi.Controllers
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Data;
+    using System.Linq;
+    using System.Net;
+    using System.Net.Http;
+    using System.Web.Http;
+    using Newtonsoft.Json;
+    using VMSWebApi.BAL;
+    using System.Configuration;
+    using System.Web;
+    using System.Globalization;
+    using CTS.OneCognizant.Platform.CoreServices;
+    using VMSWebApi.Classes;
+
+    ////using VMSWebApi.BAL;
+
+    /// <summary>
+    /// Home Page Controller
+    /// </summary>
+    public class HomePageController : ApiController
+    {
+        /// <summary>
+        /// Get Recent Visitor List
+        /// </summary>
+        /// <param name="associateID">Associate ID</param>
+        /// <returns>returns string</returns>
+        [HttpGet]
+        [Route("api/HomePage/GetRecentVisitorList/{associateID?}")]
+        public IHttpActionResult GetRecentVisitorList(string associateID=null)
+        {
+            HomePageBAL objHomePageBAL = new HomePageBAL();
+            DataTable recentVisitorList = new DataTable();
+            ResponseData objresponsedata = new ResponseData();
+            objresponsedata.resultdata = new Result();
+            
+
+            List<RecentVisitor> mainLst = new List<RecentVisitor>();
+          
+            try
+                {
+                
+                string associateid = AssociateId(associateID);
+                recentVisitorList = objHomePageBAL.GetRecentVisitorsList(associateid.ToString());
+             
+
+                int visitid = 0;
+                for (int r = 0; r <= recentVisitorList.Rows.Count; r++ ) {
+                
+                    if (visitid != Convert.ToInt32(recentVisitorList.Rows[r]["VisitorId"]))
+                    {
+                        RecentVisitor recentvisitors = new RecentVisitor();
+                       
+                          visitid = Convert.ToInt32(recentVisitorList.Rows[r]["VisitorId"]);
+                        recentvisitors.VisitorFullName = recentVisitorList.Rows[r]["VisitorFUllName"].ToString();
+                        recentvisitors.MobileNo = recentVisitorList.Rows[r]["mobileNo"].ToString();
+                        recentvisitors.Company = recentVisitorList.Rows[r]["Company"].ToString();
+                        recentvisitors.VisitorType = recentVisitorList.Rows[r]["visitortype"].ToString();
+                        
+                        recentvisitors.EqDetails = new List<EquipmentList>();
+                        mainLst.Add(recentvisitors);
+                    }
+
+
+                    if (!string.IsNullOrEmpty(recentVisitorList.Rows[r]["VisitorEquipmentID"].ToString()))
+                    {
+                        EquipmentList eqli = new EquipmentList();
+                        eqli.Make = recentVisitorList.Rows[r]["Make"].ToString();
+                        eqli.Model = recentVisitorList.Rows[r]["Model"].ToString();                       
+                        eqli.SerialNo = recentVisitorList.Rows[r]["SerialNo"].ToString();
+                        eqli.MasterDataDescription = recentVisitorList.Rows[r]["MasterDataDescription"].ToString();                       
+                        mainLst[mainLst.Count - 1].EqDetails.Add(eqli);
+                    }
+                    else
+                    {
+                        mainLst[mainLst.Count - 1].EqDetails = null;
+                    }
+
+                }
+                }
+            catch (Exception ex)
+                {
+                objHomePageBAL.LogApierrorHistory("Webapi GetRecentVisitorList" + ex, "NULL");
+             
+                }
+            return this.Ok(mainLst);
+        }
+
+        /// <summary>
+        /// Get Search result
+        /// </summary>
+        /// <param name="firstname">first name</param>
+        /// <param name="organisation">organization input</param>
+        /// <param name="mobilenumber">mobile number</param>
+        /// <param name="associateID">associate ID</param>
+        /// <returns>returns Data Table</returns>
+        [HttpPost]
+        [Route("api/HomePage/GetSearchresult")]
+        public IHttpActionResult GetSearchresult([FromBody]SearchParameters value)
+        {
+            HomePageBAL objHomePageBAL = new HomePageBAL();
+            DataTable searchlist = new DataTable();
+            ResponseData objresponsedata = new ResponseData();
+            objresponsedata.resultdata = new Result();
+            List<SearchVisitor> mainLst = new List<SearchVisitor>();
+            try
+                {
+                string searchresult = string.Empty;
+                string searchvalue = value.Searchvalue;
+                string associateid = AssociateId(null);
+                searchlist = objHomePageBAL.GetSearchresult(searchvalue, associateid);
+
+                int visitid = 0;
+                for (int r = 0; r <= searchlist.Rows.Count; r++)
+                {
+
+                    if (visitid != Convert.ToInt32(searchlist.Rows[r]["VisitorId"]))
+                    {
+                        SearchVisitor searchvisitors = new SearchVisitor();
+                        visitid = Convert.ToInt32(searchlist.Rows[r]["VisitorId"]);
+                        searchvisitors.VisitorFullName = searchlist.Rows[r]["Name"].ToString();
+                        searchvisitors.MobileNo = searchlist.Rows[r]["mobileNo"].ToString();
+                        searchvisitors.Company = searchlist.Rows[r]["Company"].ToString();
+                        searchvisitors.VisitorType = searchlist.Rows[r]["visitortype"].ToString();
+                       
+                        searchvisitors.EqDetails = new List<SearchVisitor.EquipmentList>();
+                        mainLst.Add(searchvisitors);
+                    }
+
+                    if (!string.IsNullOrEmpty(searchlist.Rows[r]["VisitorEquipmentID"].ToString()))
+                    {
+                        SearchVisitor.EquipmentList eqli = new SearchVisitor.EquipmentList();
+                        eqli.Make = searchlist.Rows[r]["Make"].ToString();
+                        eqli.Model = searchlist.Rows[r]["Model"].ToString();                        
+                        eqli.SerialNo = searchlist.Rows[r]["SerialNo"].ToString();
+                        eqli.MasterDataDescription = searchlist.Rows[r]["MasterDataDescription"].ToString();
+                         
+                        mainLst[mainLst.Count - 1].EqDetails.Add(eqli);
+                    }
+
+                    else
+                    {
+                        mainLst[mainLst.Count - 1].EqDetails = null;
+                    }
+
+
+                }
+            }
+            catch (Exception ex)
+                {
+                objHomePageBAL.LogApierrorHistory("Webapi GetSearchresult" + ex, "NULL");
+                }
+            return this.Ok(mainLst);
+            }
+
+        /// <summary>
+        /// Get Search result
+        /// </summary>
+        /// <param name="firstname">first name</param>
+        /// <param name="organisation">organization input</param>
+        /// <param name="mobilenumber">mobile number</param>
+        /// <param name="associateID">associate ID</param>
+        /// <returns>returns Data Table</returns>
+        [HttpPost]
+        [Route("api/HomePage/InsertVisitRequest")]
+        // IHttpActionResult
+        public IHttpActionResult InsertVisitRequest([FromBody]PostVisitorRequest postVisitorRequest)
+            {
+            HomePageBAL objHomePageBAL = new HomePageBAL();
+            ResponseData objresponsedata = new ResponseData();
+            objresponsedata.resultdata = new Result();
+            LocationDetails objvisititinerary = new LocationDetails();
+            VisitorDetails objvisitordetails = new VisitorDetails();
+            DataTable CRSdetails = new DataTable();
+            DataTable dtrequestid = new DataTable();
+            DataTable equipmentid = new DataTable();
+            DataTable dtvisit = new DataTable();
+            string createdby = AssociateId(null);
+            int permitITEquipments = 0;
+            string requestID = string.Empty;
+            string locationname = string.Empty;
+            int masterID =0;
+
+            // CRSdetails = objHomePageBAL.CRSAssociateDetails(createdby);
+            //string host = string.Concat(CRSdetails.Rows[0]["LastName"], ", ", CRSdetails.Rows[0]["FirstName"], " (", createdby , ")");
+            string host = "isabel,dale";
+            try
+                {
+                foreach (var vi in postVisitorRequest.Locations)
+                    {
+                   
+                    foreach (var vd in postVisitorRequest.Visitors)
+                        {
+                        IList<EquipmentDetails> equiplist = vd.Equipment;
+                        if(equiplist != null && (equiplist.Count > 0))
+                        {
+                            permitITEquipments = 1;
+
+                        }
+                        else
+                        {
+                            permitITEquipments = 0;
+                        }
+                        if (vd.VisitorType != "Client")
+                            {
+                            vi.HostID = host;
+                            }
+                        if (vi.City == locationname)
+                        {
+                            dtrequestid = objHomePageBAL.SubmitVisitorRequest(vd.VisitorFullName, vd.MobileNo, vd.Company, vd.VisitorType, vi.HostID, createdby, vi.Country, vi.City, vi.Facility, vi.FromDate, vi.FromTime, vi.ToDate, vi.ToTime, createdby, permitITEquipments, requestID, 0, masterID);
+                        }
+                        else
+                        {
+                        locationname = vi.City;
+                        dtrequestid = objHomePageBAL.SubmitVisitorRequest(vd.VisitorFullName, vd.MobileNo, vd.Company, vd.VisitorType, vi.HostID, createdby, vi.Country,vi.City,vi.Facility, vi.FromDate, vi.FromTime, vi.ToDate, vi.ToTime, createdby, permitITEquipments, requestID, 0, masterID);
+                        requestID = Convert.ToString(dtrequestid.Rows[0]["RequestID"]);
+                        objHomePageBAL.UpdatelastRequestID(Convert.ToInt32(requestID));
+                        }
+                        IList<DateTime> alldates = objHomePageBAL.GetAllDates(Convert.ToDateTime(vi.FromDate), Convert.ToDateTime(vi.ToDate));
+                        foreach (var date in alldates)
+                            {
+                            dtvisit = objHomePageBAL.SubmitVisitDetailsforothers(dtrequestid.Rows[0]["RequestID"].ToString(), date.ToString(), "insert");
+                            if (equiplist != null && (equiplist.Count > 0))
+                            {
+                                foreach (var equip in equiplist)
+                                {
+
+                                    equipmentid = objHomePageBAL.SubmitVisitDetails(dtvisit.Rows[0]["ID"].ToString(), date.ToString(), equip.EquipmentType, equip.Make, equip.ModelNumber, equip.SerialNo);
+                                }
+                            }
+
+                            //else
+                            //{
+                            //    dtvisit = objHomePageBAL.SubmitVisitDetailsforothers(dtrequestid.Rows[0]["RequestID"].ToString(), date.ToString(), "insert");
+                            //}
+                        }
+
+                        }
+                    }
+                if(dtrequestid.Rows.Count > 0 && (equipmentid.Rows.Count > 0 || dtvisit.Rows.Count > 0))
+                    {
+                    objresponsedata.resultdata.ResponseMessage = "Visitor Request Submitted SUccessfully";
+                    objresponsedata.resultdata.OperationStatus = true;
+                    }
+                else
+                    {
+                    objresponsedata.resultdata.ResponseMessage = "Visitor Request Not Submitted SUccessfully";
+                    objresponsedata.resultdata.OperationStatus = true;
+                    }
+
+                }
+            catch (Exception ex)
+                {
+                objresponsedata.resultdata.ResponseMessage = "An error occured";
+                objresponsedata.resultdata.OperationStatus = true;
+                objHomePageBAL.LogApierrorHistory("Webapi InsertVisitRequest" + ex, "NULL");
+                }
+            return this.Ok(objresponsedata);
+            }
+
+        /// <summary>
+        /// Get Recent Visitor List
+        /// </summary>
+        /// <param name="associateID">Associate ID</param>
+        /// <returns>returns string</returns>
+        [HttpGet]
+        [Route("api/HomePage/GetLocationList")]
+        //
+        public IHttpActionResult GetLocationList()
+            {
+            string AssociateID = String.Empty;
+           
+            HomePageBAL objHomePageBAL = new HomePageBAL();
+            DataTable locationlistdt = new DataTable();
+            ResponseData objresponsedata = new ResponseData();
+            objresponsedata.resultdata = new Result();
+            ResponseFacilityList facilitylist = new ResponseFacilityList();
+            DataSet LocationList = new DataSet();
+            try
+                {
+                AssociateID = GetUserID();
+                string locationlist = string.Empty;
+
+                //facilitylist.CountryCityFacility = objHomePageBAL.GetLocationList(AssociateID);
+
+                LocationList = objHomePageBAL.GetLocationList(AssociateID);
+                facilitylist.CountryCityFacility = LocationList.Tables[0];
+                facilitylist.DefaultCountryCityFacility = LocationList.Tables[1];
+
+            }
+            catch (Exception ex)
+                {
+                objHomePageBAL.LogApierrorHistory("Webapi GetLocationList" + ex, "NULL");
+                throw ex;
+                }
+            return this.Ok(facilitylist);
+        }
+
+
+        /// <summary>
+        /// Get Recent Visitor List
+        /// </summary>
+        /// <param name="associateID">Associate ID</param>
+        /// <returns>returns string</returns>
+        [HttpGet]
+        [Route("api/HomePage/GetCountryCode")]
+        //
+        public IHttpActionResult GetCountryCode()
+        {
+            string AssociateID = GetUserID();
+            HomePageBAL objHomePageBAL = new HomePageBAL();
+            DataTable CClistdt = new DataTable();
+            ResponseData objresponsedata = new ResponseData();
+            objresponsedata.resultdata = new Result();
+           
+            try
+            {
+                string locationlist = string.Empty;
+
+                CClistdt = objHomePageBAL.GetCountryCode(AssociateID);
+               
+            }
+            catch (Exception ex)
+            {
+                objHomePageBAL.LogApierrorHistory("Webapi GetCountryCode" + ex, "NULL");
+
+            }
+            return this.Ok(CClistdt);
+        }
+        /// <summary>
+        /// Get Search result
+        /// </summary>
+        /// <param name="firstname">first name</param>
+        /// <param name="organisation">organization input</param>
+        /// <param name="mobilenumber">mobile number</param>
+        /// <param name="associateID">associate ID</param>
+        /// <returns>returns Data Table</returns>
+        [HttpPost]
+        [Route("api/HomePage/CheckHostID")]
+        public IHttpActionResult CheckHostID([FromBody]HostIDCheck value)
+            {
+            HomePageBAL objHomePageBAL = new HomePageBAL();
+            DataTable hostcheckdt = new DataTable();
+            ResponseData objresponsedata = new ResponseData();
+            objresponsedata.resultdata = new Result();
+            ResponseHostIDCheck HostIDM = new ResponseHostIDCheck();
+            try
+                {
+                hostcheckdt = objHomePageBAL.CheckHostID(value.HostID);
+               if (hostcheckdt.Rows.Count > 0)
+                    {
+                    HostIDM.HostID = true;
+                    }
+                else
+                    {
+                    HostIDM.HostID = false;
+                    }
+                }
+            catch (Exception ex)
+                {
+                objHomePageBAL.LogApierrorHistory("Webapi CheckHostID" + ex, "NULL");
+                }
+            return this.Ok(HostIDM);
+            }
+
+        /// <summary>
+        /// GEt ID
+        /// </summary>
+        /// <param name="id">id integer</param>
+        /// <returns>returns string</returns>
+        public string Get(int id)
+            {
+            return "value";
+            }
+        public string GetUserID()
+        {
+
+            string userId = string.Empty;
+            try
+            {
+                //UserContext usr = UserContext.GetUserContext();
+                //userId = usr.CurrentUser.UserId;
+                //if (string.IsNullOrEmpty(userId) && HttpContext.Current.User.Identity != null && HttpContext.Current.User.Identity.IsAuthenticated)
+                //{
+                //    userId = HttpContext.Current.User.Identity.Name.ToUpper().Replace("CTS\\", string.Empty);
+
+                //}
+                userId = "597397";
+            }
+            catch (Exception ex)
+            {
+                {
+                   
+                    return Convert.ToString(ex);
+                }
+            }
+            return userId;
+        }
+
+             
+    
+        /// <summary>
+        /// Get the Associate details
+        /// </summary>
+        /// <param name="proxyAssociateID">Proxy associate ID</param>
+        /// <returns>returns string</returns>
+        public static string AssociateId(string proxyAssociateID)
+            {
+            string userId = string.Empty;
+            try
+                {
+                string proxyUsers = Convert.ToString(ConfigurationManager.AppSettings["ProxyUsers"]);
+                List<string> proxyUsersList = proxyUsers.Split(',').ToList();
+                //UserContext usr = UserContext.GetUserContext();
+                //userId = usr.CurrentUser.UserId;
+               // userId = HttpContext.Current.User.Identity.Name.ToUpper(CultureInfo.InvariantCulture).Replace("CTS\\", string.Empty);
+                if (proxyUsersList != null && proxyUsersList.Contains(userId) && proxyAssociateID != null)
+                {
+                    //userId = proxyAssociateID;
+                    //userId = HttpContext.Current.User.Identity.Name.ToUpper().Replace("CTS\\", string.Empty);
+                    //userId = usr.CurrentUser.UserId;
+                    userId = "597397";
+                }
+
+                userId = "597397";
+            }
+            catch
+                {
+                //UserContext usr = UserContext.GetUserContext();
+                //userId = usr.CurrentUser.UserId;
+                //if (string.IsNullOrEmpty(userId) && HttpContext.Current.User.Identity != null && HttpContext.Current.User.Identity.IsAuthenticated)
+                //{
+                //    userId = HttpContext.Current.User.Identity.Name.ToUpper().Replace("CTS\\", string.Empty);
+                //}
+                userId = "597397";
+            }
+
+            return Convert.ToString(userId, CultureInfo.InvariantCulture);
+
+        }
+ 
+
+
+    }
+}
