@@ -1,0 +1,7 @@
+namespace VMSWebApi.Classes
+    {
+    public class HostIDCheck
+        {
+        public string HostID { get; set; }
+        }
+    }
