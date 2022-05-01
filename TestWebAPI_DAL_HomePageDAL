@@ -1,0 +1,623 @@
+//-----------------------------------------------------------------------
+// <copyright file="HomePageDAL.cs" company="CTS">
+//     Copyright (c) . All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
+namespace VMSWebApi.DAL
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Configuration;
+    using System.Data;
+    using System.Data.SqlClient;
+    using System.Linq;
+    using System.Web;
+    using AzureSQLHelper;
+
+    /// <summary>
+    /// Home Page DAL
+    /// </summary>
+    public class HomePageDAL
+    {
+        /// <summary>
+        /// Connection String
+        /// </summary>
+        private ConnectionStringSettings connectionStringSettings = ConfigurationManager.ConnectionStrings["VMSConnectionString"];
+
+        /// <summary>
+        /// ConnectionString empty string
+        /// </summary>
+        private string strConnectionString = string.Empty;
+
+        /// <summary>
+        /// Get Recent Visitors List
+        /// </summary>
+        /// <param name="associateID">Associate ID</param>
+        /// <returns>returns Data Table</returns>
+        public DataTable GetRecentVisitorsList(string associateID)
+        {
+            DataTable getRecentVisitors = new DataTable();
+            if (this.connectionStringSettings != null)
+            {
+                this.strConnectionString = this.connectionStringSettings.ConnectionString;
+            }
+
+            SqlConnection con = new SqlConnection(this.strConnectionString);
+            try
+            {
+                using (SqlCommand com = new SqlCommand("GetRecentVisitor_MobApi", con))
+                {
+                    com.CommandType = CommandType.StoredProcedure;
+                    com.Parameters.Add("@HostId", SqlDbType.VarChar, 50).Value = associateID;
+                    com.Parameters.Add("@Count", SqlDbType.Int).Value = 10;
+                    con.OpenWithMSI();
+                    using (SqlDataReader drrecentvisitorlist = com.ExecuteReader())
+                    {
+                        getRecentVisitors.Load(drrecentvisitorlist);
+                        drrecentvisitorlist.Close();
+                    }
+                }
+            }
+            catch (SqlException ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                con.Close();
+            }
+
+            return getRecentVisitors;
+        }
+
+
+        /// <summary>
+        /// Get Recent Visitors List
+        /// </summary>
+        /// <param name="associateID">Associate ID</param>
+        /// <returns>returns Data Table</returns>
+        public DataTable SubmitVisitorRequest(string name, string company, string mobilenumber, string hostid, string visitortype,
+           string country, string city, string facility, string fromdate, string todate, string fromtime, string totime, string createdby, string Status, int permitITEquipments, string parentReferenceId, int bulkUpload, int masterVisitorID)
+        {
+            DataTable getrequestid = new DataTable();
+            string offsetval = String.Empty;
+            offsetval = getOffsetforcountry(facility);
+            //if (this.connectionStringSettings != null)
+            //{
+            //    this.strConnectionString = this.connectionStringSettings.ConnectionString;
+            //}
+
+              this.strConnectionString = "Data Source = ctsazsimisgntm1.inso13dfbbbfa2150.database.windows.net; Initial Catalog = OneC_VMS; Persist Security Info = True; User ID = OneC_VMS; Password = VMS_S111111#;Connection Timeout=90";
+            SqlConnection con = new SqlConnection(this.strConnectionString);
+            try
+            {
+              
+                using (SqlCommand com = new SqlCommand("SubmitRequest_MobApi", con))
+                {
+
+                    com.CommandType = CommandType.StoredProcedure;
+                    com.Parameters.Add("@FirstName", SqlDbType.VarChar, 100).Value = name;
+                    com.Parameters.Add("@Company", SqlDbType.VarChar, 100).Value = company;
+                    com.Parameters.Add("@MobileNumber", SqlDbType.VarChar, 50).Value = mobilenumber;
+                    com.Parameters.Add("@HostID", SqlDbType.VarChar, 200).Value = hostid;
+                    com.Parameters.Add("@visitortype", SqlDbType.VarChar, 40).Value = visitortype;
+                    com.Parameters.Add("@Country", SqlDbType.VarChar, 100).Value = country;
+                    com.Parameters.Add("@City", SqlDbType.VarChar, 100).Value = city;
+                    com.Parameters.Add("@Facility", SqlDbType.VarChar, 100).Value = facility;
+                    com.Parameters.Add("@FromDate", SqlDbType.VarChar, 100).Value = fromdate;
+                    com.Parameters.Add("@ToDate", SqlDbType.VarChar, 100).Value = todate;
+                    com.Parameters.Add("@FromTime", SqlDbType.VarChar, 100).Value = fromtime;
+                    com.Parameters.Add("@ToTime", SqlDbType.VarChar, 100).Value = totime;
+                    com.Parameters.Add("@Createdby", SqlDbType.VarChar, 100).Value = createdby;
+                    com.Parameters.Add("@Status", SqlDbType.VarChar, 100).Value = "Submitted";
+                    com.Parameters.Add("@permitITEquipments", SqlDbType.VarChar, 100).Value = permitITEquipments;
+                    com.Parameters.Add("@parentReferenceId", SqlDbType.VarChar, 100).Value = parentReferenceId;
+                    com.Parameters.Add("@bulkUpload", SqlDbType.VarChar, 100).Value = bulkUpload;
+                    com.Parameters.Add("@masterVID", SqlDbType.VarChar, 100).Value = masterVisitorID;
+                    com.Parameters.Add("@offset", SqlDbType.VarChar, 100).Value = offsetval;
+                    con.OpenWithMSI();
+
+                    using (SqlDataReader drrequestid = com.ExecuteReader())
+                    {
+                        //string refer="500";
+                        //LogApiErrorHistory(name + facility, refer);
+                        getrequestid.Load(drrequestid);
+                        drrequestid.Close();
+                    }
+                }
+            }
+            catch (SqlException ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                con.Close();
+            }
+
+            return getrequestid;
+        }
+
+        public string getOffsetforcountry (string facility)
+        {
+            DataTable TimeZoneDescription = new DataTable();
+            var offsetval = String.Empty;
+            if (this.connectionStringSettings != null)
+            {
+                this.strConnectionString = this.connectionStringSettings.ConnectionString;
+            }
+            //  this.strConnectionString = "Data Source = ctsazsimisgntm1.inso13dfbbbfa2150.database.windows.net; Initial Catalog = OneC_VMS; Persist Security Info = True; User ID = OneC_VMS; Password = VMS_S111111#;Connection Timeout=90";
+
+            SqlConnection con = new SqlConnection(this.strConnectionString);
+            try
+            {
+                using (SqlCommand com = new SqlCommand("usp_GetTimeZonebyFacility", con))
+                {
+                    com.CommandType = CommandType.StoredProcedure;
+                    com.Parameters.Add("@Facility", SqlDbType.VarChar, 100).Value = facility;
+                    con.OpenWithMSI();
+                    using (SqlDataReader dr = com.ExecuteReader())
+                    {
+                        TimeZoneDescription.Load(dr);
+                        dr.Close();
+                    }
+                }
+                if (!string.IsNullOrEmpty(Convert.ToString(TimeZoneDescription.Rows[0].ItemArray[0])))
+                {
+                    TimeZoneInfo tzi = TimeZoneInfo.FindSystemTimeZoneById(Convert.ToString(TimeZoneDescription.Rows[0].ItemArray[0]));
+                    if (tzi != null)
+                    {
+                        TimeSpan offset = tzi.GetUtcOffset(DateTime.Now);
+                        offsetval = ((offset.TotalMinutes) * -1).ToString();
+                    }
+                    else
+                    {
+                        offsetval = "-330";
+                    }
+                }
+                else
+                {
+                    offsetval = "-330";
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                con.Close();
+            }
+            return offsetval;
+        }
+        /// <summary>
+        /// Get Recent Visitors List
+        /// </summary>
+        /// <param name="associateID">Associate ID</param>
+        /// <returns>returns Data Table</returns>
+        public DataTable SubmitVisitDetails(string requestid, string date, string type, string make, string model, string serial)
+        {
+            DataTable getequipementid = new DataTable();
+            if (this.connectionStringSettings != null)
+            {
+                this.strConnectionString = this.connectionStringSettings.ConnectionString;
+            }
+
+
+            SqlConnection con = new SqlConnection(this.strConnectionString);
+            try
+            {
+                using (SqlCommand com = new SqlCommand("SubmitVisitDetails_MobApi", con))
+                {
+                    com.CommandType = CommandType.StoredProcedure;
+                    com.Parameters.Add("@RequestID", SqlDbType.Int).Value = requestid;
+                    com.Parameters.Add("@Date", SqlDbType.VarChar, 50).Value = date;
+                    com.Parameters.Add("@Type", SqlDbType.VarChar, 50).Value = type;
+                    com.Parameters.Add("@Make", SqlDbType.VarChar, 50).Value = make;
+                    com.Parameters.Add("@Model", SqlDbType.VarChar, 50).Value = model;
+                    com.Parameters.Add("@Serial", SqlDbType.VarChar, 50).Value = serial;
+                    con.OpenWithMSI();
+                    using (SqlDataReader drequip = com.ExecuteReader())
+                    {
+                        getequipementid.Load(drequip);
+                        drequip.Close();
+                    }
+                }
+            }
+            catch (SqlException ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                con.Close();
+            }
+
+            return getequipementid;
+        }
+
+
+        /// <summary>
+        /// Insert Visit Details without equipment
+        /// </summary>
+        /// <param name="associateID">Associate ID</param>
+        /// <returns>returns Data Table</returns>
+        public DataTable SubmitVisitDetailsforothers(string requestid, string date, string status)
+        {
+            DataTable dtvisit = new DataTable();
+            if (this.connectionStringSettings != null)
+            {
+                this.strConnectionString = this.connectionStringSettings.ConnectionString;
+            }
+
+
+            SqlConnection con = new SqlConnection(this.strConnectionString);
+            try
+            {
+                using (SqlCommand com = new SqlCommand("usp_InsertVisitDetails", con))
+                {
+                    com.CommandType = CommandType.StoredProcedure;
+                    com.Parameters.Add("@RequestID", SqlDbType.Int).Value = requestid;
+                    com.Parameters.Add("@Date", SqlDbType.VarChar, 50).Value = date;
+                    com.Parameters.Add("@Status", SqlDbType.VarChar, 50).Value = status;
+
+                    con.OpenWithMSI();
+                    using (SqlDataReader drvisit = com.ExecuteReader())
+                    {
+                        dtvisit.Load(drvisit);
+                        drvisit.Close();
+                    }
+                }
+            }
+            catch (SqlException ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                con.Close();
+            }
+
+            return dtvisit;
+        }
+
+        /// <summary>
+        /// Get Search result
+        /// </summary>
+        /// <param name="firstname">first name</param>
+        /// <param name="organisation">organization input</param>
+        /// <param name="mobilenumber">mobile number</param>
+        /// <param name="associateID">associate ID</param>
+        /// <returns>returns Data Table</returns>
+        public DataTable GetSearchresult(string searchvalue, string hostid)
+        {
+            DataTable searchresult = new DataTable();
+           
+            if (this.connectionStringSettings != null)
+            {
+                this.strConnectionString = this.connectionStringSettings.ConnectionString;
+            }
+            //this.strConnectionString = "Data Source = ctsazsimisgntm1.inso13dfbbbfa2150.database.windows.net; Initial Catalog = OneC_VMS; Persist Security Info = True; User ID = OneC_VMS; Password = VMS_S111111#;Connection Timeout=90";
+            SqlConnection con = new SqlConnection(this.strConnectionString);
+            try
+            {
+                using (SqlCommand com = new SqlCommand("GetSearchResult_MobApi", con))
+                {
+                    com.CommandType = CommandType.StoredProcedure;
+                    if (string.IsNullOrEmpty(searchvalue) || string.IsNullOrWhiteSpace(searchvalue))
+                    {
+                        com.Parameters.Add("@SearchValue", SqlDbType.VarChar, 50).Value = string.Empty;
+                    }
+                    else
+                    {
+                        com.Parameters.Add("@SearchValue", SqlDbType.VarChar, 50).Value = searchvalue;
+                    }
+
+                    com.Parameters.Add("@HostId", SqlDbType.VarChar, 50).Value = hostid;
+                    con.OpenWithMSI();
+                    using (SqlDataReader drsearchresult = com.ExecuteReader())
+                    {
+                        searchresult.Load(drsearchresult);
+                        drsearchresult.Close();
+                    }
+                }
+            }
+            catch (SqlException ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                con.Close();
+            }
+
+            return searchresult;
+        }
+
+        /// <summary>
+        /// Get Recent Visitors List
+        /// </summary>
+        /// <param name="associateID">Associate ID</param>
+        /// <returns>returns Data Table</returns>
+        public DataSet GetLocationList(String AssociateID)
+        {
+            DataSet getLoc = new DataSet();
+            DataTable getlocationList = new DataTable();
+            DataTable getlocationL = new DataTable();
+
+            if (this.connectionStringSettings != null)
+            {
+                this.strConnectionString = this.connectionStringSettings.ConnectionString;
+
+            }
+
+            SqlConnection con = new SqlConnection(this.strConnectionString);
+            try
+            {
+
+                using (SqlCommand com = new SqlCommand("GetLocationList_MobApi", con))
+                {
+                    com.CommandType = CommandType.StoredProcedure;
+                    com.Parameters.Add("@AssociateID", SqlDbType.VarChar, 50).Value = AssociateID;
+                    con.OpenWithMSI();
+                    using (SqlDataReader drlocationlist = com.ExecuteReader())
+                    {
+                        SqlDataAdapter adapter = new SqlDataAdapter();
+                        adapter.SelectCommand = com;
+                        getlocationList.Load(drlocationlist);
+                        drlocationlist.NextResult();
+                        DataTable dt = new DataTable();
+                        dt.Load(drlocationlist);
+                        adapter.Fill(getLoc);
+
+                        drlocationlist.Close();
+
+                    }
+                }
+            }
+            catch (SqlException ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                con.Close();
+            }
+
+            return getLoc;
+        }
+
+        /// <summary>
+        /// Get Recent Visitors List
+        /// </summary>
+        /// <param name="associateID">Associate ID</param>
+        /// <returns>returns Data Table</returns>
+        public DataTable GetCountryCode(String AssociateID)
+        {
+
+
+            DataTable getCntryCodeL = new DataTable();
+
+           // if (this.connectionStringSettings != null)
+            //{
+            //    this.strConnectionString = this.connectionStringSettings.ConnectionString;
+
+            //}
+            this.strConnectionString = "Data Source = ctsazsimisgntm1.inso13dfbbbfa2150.database.windows.net; Initial Catalog = OneC_VMS; Persist Security Info = True; User ID = OneC_VMS; Password = VMS_S111111#;Connection Timeout=90";
+
+            SqlConnection con = new SqlConnection(this.strConnectionString);
+            try
+            {
+
+                using (SqlCommand com = new SqlCommand("GetCountryCode_MobWebApi", con))
+                {
+                    com.CommandType = CommandType.StoredProcedure;
+                    con.OpenWithMSI();
+                    using (SqlDataReader drlocationlist = com.ExecuteReader())
+                    {
+                        SqlDataAdapter adapter = new SqlDataAdapter();
+                        adapter.SelectCommand = com;
+                        getCntryCodeL.Load(drlocationlist);
+
+
+                        drlocationlist.Close();
+
+                    }
+                }
+            }
+            catch (SqlException ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                con.Close();
+            }
+
+            return getCntryCodeL;
+        }
+
+        /// <summary>
+        /// Get Search result
+        /// </summary>
+        /// <param name="firstname">first name</param>
+        /// <param name="organisation">organization input</param>
+        /// <param name="mobilenumber">mobile number</param>
+        /// <param name="associateID">associate ID</param>
+        /// <returns>returns Data Table</returns>
+        public DataTable CheckHostID(string hostid)
+        {
+            DataTable HostCheckdt = new DataTable();
+            if (this.connectionStringSettings != null)
+            {
+                this.strConnectionString = this.connectionStringSettings.ConnectionString;
+            }
+
+            SqlConnection con = new SqlConnection(this.strConnectionString);
+            try
+            {
+                using (SqlCommand com = new SqlCommand("CheckHostID_MobileApi", con))
+                {
+                    com.CommandType = CommandType.StoredProcedure;
+                    if (string.IsNullOrEmpty(hostid) || string.IsNullOrWhiteSpace(hostid))
+                    {
+                        com.Parameters.Add("@HostID", SqlDbType.VarChar, 50).Value = string.Empty;
+                    }
+                    else
+                    {
+                        com.Parameters.Add("@HostID", SqlDbType.VarChar, 50).Value = hostid;
+                    }
+                    con.OpenWithMSI();
+                    using (SqlDataReader drhostcheck = com.ExecuteReader())
+                    {
+                        HostCheckdt.Load(drhostcheck);
+                        drhostcheck.Close();
+                    }
+
+
+                }
+            }
+            catch (SqlException ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                con.Close();
+            }
+
+            return HostCheckdt;
+        }
+        /// <summary>
+        /// Update Parent reference id
+        /// </summary>
+        /// <param name="firstname">first name</param>
+        /// <param name="organisation">organization input</param>
+        /// <param name="mobilenumber">mobile number</param>
+        /// <param name="associateID">associate ID</param>
+        /// <returns>returns Data Table</returns>
+        public DataTable UpdatelastRequestID(int RequestID)
+        {
+            DataTable getVisitID = new DataTable();
+            if (this.connectionStringSettings != null)
+            {
+                this.strConnectionString = this.connectionStringSettings.ConnectionString;
+            }
+
+            SqlConnection con = new SqlConnection(this.strConnectionString);
+            try
+            {
+                using (SqlCommand com = new SqlCommand("usp_UpdatelastRequestID_MobApi", con))
+                {
+                    com.CommandType = CommandType.StoredProcedure;
+
+                    com.Parameters.Add("@RequestID", SqlDbType.Int, 50).Value = RequestID;
+
+                    con.OpenWithMSI();
+                    using (SqlDataReader drhostcheck = com.ExecuteReader())
+                    {
+                        getVisitID.Load(drhostcheck);
+                        drhostcheck.Close();
+                    }
+
+                }
+
+            }
+            catch (SqlException ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                con.Close();
+            }
+
+            return getVisitID;
+
+        }
+        /// 
+        /// 
+        /// <summary>
+        /// Log Batch History
+        /// </summary>
+        /// <param name="message">message string</param>
+        /// <param name="referenceId">referenceId string</param>
+        public void LogApiErrorHistory(string message, string referenceId)
+        {
+
+            if (this.connectionStringSettings != null)
+            {
+                this.strConnectionString = this.connectionStringSettings.ConnectionString;
+            }
+            //  this.strConnectionString = "Data Source = ctsazsimisgntm1.inso13dfbbbfa2150.database.windows.net; Initial Catalog = OneC_VMS; Persist Security Info = True; User ID = OneC_VMS; Password = VMS_S111111#;Connection Timeout=90";
+
+
+            SqlConnection con = new SqlConnection(this.strConnectionString);
+            try
+            {
+                using (SqlCommand com = new SqlCommand("ServiceHistory", con))
+                {
+                    com.CommandType = CommandType.StoredProcedure;
+                    com.Parameters.Add("@Message", SqlDbType.VarChar, 8000).Value = message;
+                    //com.Parameters.Add("@Message", SqlDbType.VarChar, 200).Value = message;
+
+                    if (!string.IsNullOrEmpty(referenceId) && referenceId != "NULL")
+                    {
+                        com.Parameters.Add("@RefId", SqlDbType.Int).Value = Convert.ToInt32(referenceId);
+                    }
+                    else
+                    {
+                        com.Parameters.Add("@RefId", SqlDbType.Int).Value = DBNull.Value;
+                    }
+                    con.OpenWithMSI();
+                    com.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                ////ExceptionLogger.ExceptionLogging(ex);
+                throw ex;
+            }
+            finally
+            {
+                con.Close();
+            }
+        }
+
+        /// <summary>
+        /// To get facility details
+        /// </summary>
+        /// <param name="associateID">associate ID</param>
+        /// <returns>Facility List</returns>
+        public DataTable CRSAssociateDetails(string associateID)
+        {
+            string sqlGetCountry = "GetAssociateDetails_New";
+            DataTable hostdetails = new DataTable();
+            if (this.connectionStringSettings != null)
+            {
+                this.strConnectionString = this.connectionStringSettings.ConnectionString;
+            }
+
+            SqlConnection sqlConn = new SqlConnection(this.strConnectionString);
+            sqlConn.OpenWithMSI();
+            try
+            {
+                SqlCommand cmdhost = new SqlCommand(sqlGetCountry, sqlConn);
+                cmdhost.CommandType = CommandType.StoredProcedure;
+                cmdhost.Parameters.Add("@AssociateId", SqlDbType.VarChar, 11).Value = associateID.Trim();
+                SqlDataAdapter adp = new SqlDataAdapter(cmdhost);
+                adp.Fill(hostdetails);
+                return hostdetails;
+            }
+            catch (System.Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                sqlConn.Close();
+            }
+        }
+
+    }
+}
