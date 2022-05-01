@@ -1,0 +1,14 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+namespace VMSWebApi.Classes
+    {
+    
+    public class Result
+        {
+        public string ResponseMessage { get; set; }
+        public bool OperationStatus { get; set; }
+        }
+    }
