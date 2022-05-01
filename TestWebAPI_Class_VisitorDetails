@@ -1,0 +1,34 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+namespace VMSWebApi.Classes
+    {
+    public class VisitorDetails
+    {
+        public string VisitorType { get; set; }
+        public string VisitorFullName { get; set; }
+        public string MobileNo { get; set; }
+        public string Company { get; set; }
+       
+        public List<EquipmentDetails> Equipment { get; set; }
+    }
+ 
+    public class EquipmentDetails
+    {
+        public string EquipmentType { get; set; }
+        public string Make { get; set; }
+        public string ModelNumber { get; set; }
+        public string SerialNo { get; set; }
+    }
+    //public string VisitorEquipmentType { get; set; }
+
+    //public string VisitorEquipmentMake { get; set; }
+
+    //public string VisitorEquipmentModel { get; set; }
+
+    //public string VisitorEquipmentSerial { get; set; }
+}
+    
+
