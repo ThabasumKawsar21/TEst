@@ -1,8 +1,4 @@
-// -----------------------------------------------------------------------
-// <copyright file="Program.cs" company="CTS">
-//     Copyright (c) . All rights reserved.
-// </copyright>
-// -----------------------------------------------------------------------
+
 namespace VMSmailerBatch
 {
     using System;
