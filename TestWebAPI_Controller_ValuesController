@@ -1,0 +1,64 @@
+//-----------------------------------------------------------------------
+// <copyright file="ValuesController.cs" company="CTS">
+//     Copyright (c) . All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
+namespace VMSWebApi.Controllers
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Net;
+    using System.Net.Http;
+    using System.Web.Http;
+
+    /// <summary>
+    /// Values Controller
+    /// </summary>
+    public class ValuesController : ApiController
+    {
+        /// <summary>
+        /// get Method
+        /// </summary>
+        /// <returns>returns list</returns>
+        public IEnumerable<string> Get()
+        {
+            return new string[] { "value1", "value2" };
+        }
+
+        /// <summary>
+        /// GEt ID
+        /// </summary>
+        /// <param name="id">id integer</param>
+        /// <returns>returns string</returns>
+        public string Get(int id)
+        {
+            return "value";
+        }
+
+        /// <summary>
+        /// Post Method
+        /// </summary>
+        /// <param name="value">string value</param>
+        public void Post([FromBody]string value)
+        {
+        }
+
+        /// <summary>
+        /// Put Method
+        /// </summary>
+        /// <param name="id">id integer</param>
+        /// <param name="value">string value</param>
+        public void Put(int id, [FromBody]string value)
+        {
+        }
+
+        /// <summary>
+        /// Delete Method
+        /// </summary>
+        /// <param name="id">id integer</param>
+        public void Delete(int id)
+        {
+        }
+    }
+}
